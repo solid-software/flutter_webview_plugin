@@ -316,6 +316,33 @@ static NSString *const CHANNEL_NAME = @"flutter_webview_plugin";
 
     return nil;
 }
+- (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:message
+                                                                             message:nil
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"OK"
+                                                        style:UIAlertActionStyleCancel
+                                                      handler:^(UIAlertAction *action) {
+                                                          completionHandler();
+                                                      }]];
+    UIViewController *viewController = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    if ( viewController.presentedViewController && !viewController.presentedViewController.isBeingDismissed ) {
+        viewController = viewController.presentedViewController;
+    }
+
+    NSLayoutConstraint *constraint = [NSLayoutConstraint
+                                      constraintWithItem:alertController.view
+                                      attribute:NSLayoutAttributeHeight
+                                      relatedBy:NSLayoutRelationLessThanOrEqual
+                                      toItem:nil
+                                      attribute:NSLayoutAttributeNotAnAttribute
+                                      multiplier:1
+                                      constant:viewController.view.frame.size.height*2.0f];
+
+    [alertController.view addConstraint:constraint];
+    [viewController presentViewController:alertController animated:YES completion:^{}];
+}
 
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
     [channel invokeMethod:@"onState" arguments:@{@"type": @"startLoad", @"url": webView.URL.absoluteString}];
